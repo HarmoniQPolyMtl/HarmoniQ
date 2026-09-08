@@ -111,8 +111,16 @@ def main():
         action="store_true",
         help="Ne pas reconstruire le client avant de lancer le serveur",
     )
+    
+    db_group = parser.add_mutually_exclusive_group()
+    db_group.add_argument("--postgre", action="store_true", default=True, help="Utilise PostgreSQL (par défaut)")
+    db_group.add_argument("--sqlite", action="store_true", help="Utilise SQLite")
 
     args = parser.parse_args()
+    
+    if args.sqlite:
+        os.environ["HARMONIQ_DB"] = "sqlite"
+        
     log_level = "DEBUG" if args.debug else "WARNING"
     os.environ.setdefault("LOG_LEVEL", log_level)
     logging.basicConfig(level=getattr(logging, log_level))

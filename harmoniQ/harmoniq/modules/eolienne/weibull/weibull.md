@@ -76,7 +76,7 @@ Objectif:
 
 Commande fit:
 ```powershell
-.\venv\Scripts\python.exe -m harmoniq.scripts.backfill_weibull_eolien --start-year 2015 --end-year 2023 --granularity seasonal --min-samples 500
+.\venv\Scripts\python.exe -m harmoniq.scripts.eolien.backfill_weibull_eolien --start-year 2015 --end-year 2023 --granularity seasonal --min-samples 500
 ```
 
 Commande comparaison 2024:
@@ -93,7 +93,7 @@ Objectif:
 maximiser la stabilité des coefficients, pas valider hors échantillon.
 
 ```powershell
-.\venv\Scripts\python.exe -m harmoniq.scripts.backfill_weibull_eolien --start-year 2015 --end-year 2024 --granularity seasonal --min-samples 500
+.\venv\Scripts\python.exe -m harmoniq.scripts.eolien.backfill_weibull_eolien --start-year 2015 --end-year 2024 --granularity seasonal --min-samples 500
 ```
 
 Puis:
@@ -106,7 +106,7 @@ Cette fois, le compteur de fuite peut monter à `43/43`.
 
 ## 5.3 Mode annuel uniquement (sans saisonnalité)
 ```powershell
-.\venv\Scripts\python.exe -m harmoniq.scripts.backfill_weibull_eolien --start-year 2015 --end-year 2023 --granularity annual --min-samples 500
+.\venv\Scripts\python.exe -m harmoniq.scripts.eolien.backfill_weibull_eolien --start-year 2015 --end-year 2023 --granularity annual --min-samples 500
 ```
 
 Utilité:
@@ -118,7 +118,7 @@ Par défaut `--min-samples 500`.
 
 Exemple plus strict:
 ```powershell
-.\venv\Scripts\python.exe -m harmoniq.scripts.backfill_weibull_eolien --start-year 2015 --end-year 2023 --granularity seasonal --min-samples 2000
+.\venv\Scripts\python.exe -m harmoniq.scripts.eolien.backfill_weibull_eolien --start-year 2015 --end-year 2023 --granularity seasonal --min-samples 2000
 ```
 
 ## 6. Comment interpréter les fichiers

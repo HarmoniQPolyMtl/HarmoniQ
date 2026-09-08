@@ -1,4 +1,4 @@
-﻿vi.mock('leaflet', () => ({
+vi.mock('leaflet', () => ({
   default: {
     icon: vi.fn().mockReturnValue({}),
     map: vi.fn().mockReturnValue({}),
@@ -33,7 +33,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DEFAULT_INFRA_GROUP_ID, InfrastructureGroup } from '@app/models/infrastructure-group';
 
 const INFRA_TYPES = ['hydro', 'eolienneparc', 'solaire', 'thermique', 'nucleaire'];
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 
 const MOCK_INFRA_GROUP: InfrastructureGroup = {
   id: 100,

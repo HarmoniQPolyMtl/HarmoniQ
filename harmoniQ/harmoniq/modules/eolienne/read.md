@@ -123,9 +123,9 @@ Le module supporte un mode comparatif avec coefficients Weibull par parc:
 
 ### Pipeline Weibull
 1. Migration non destructive des colonnes:
-   - `python -m harmoniq.scripts.migrate_add_weibull_columns`
+   - `python -m harmoniq.scripts.eolien.migrate_add_weibull_columns`
 2. Backfill auto (1 an de reference, par defaut 2024):
-   - `python -m harmoniq.scripts.backfill_weibull_eolien --ref-year 2024`
+   - `python -m harmoniq.scripts.eolien.backfill_weibull_eolien --ref-year 2024`
 3. Run module eolien:
    - `python -m harmoniq.modules.eolienne.__init__`
 

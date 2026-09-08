@@ -7,9 +7,11 @@
 Démarre le serveur FastAPI (via Uvicorn) et le client Angular.
 
 ```bash
-launch-app           # Build le client puis lance le serveur en mode production
+launch-app           # Build le client puis lance le serveur en mode production, utilise postgre en tant que base de donnée par défaut
 launch-app --debug   # Lance le serveur avec rechargement automatique + Angular dev server (ng serve)
 launch-app --profile # Active le profiler de performance
+launch-app --postgre # Lance le serveur en utilisant postgre en tant que base de donnée
+launch-app --sqlite  # Lance le serveur en utilisant sqlite en tant que base de donnée
 ```
 
 **Options :**
@@ -30,12 +32,20 @@ Excepté en mode debug, où le client est accessible sur **http://localhost:4200
 
 ### `init-db` — Initialiser la base de données
 
-Crée le schéma de la base de données SQLite et la remplit avec les données de référence (centrales thermiques, solaires, éoliennes, barrages hydro, réseau électrique).
+Le projet supporte à la fois **SQLite** et **PostgreSQL**. Par défaut, toutes les commandes ciblent **PostgreSQL**.
 
+- **Peupler la base (avec les CSVs de référence)** :
 ```bash
-init-db         # Crée les tables sans remplir les données
-init-db -p      # Crée les tables et insère toutes les données de référence
-init-db -R -p   # Réinitialise la base (supprime puis recrée) et insère les données
+init-db -p              # Met à jour la base de donnée PostgreSQL
+init-db -p --postgre    # Met à jour la base de donnée PostgreSQL
+init-db -p --sqlite     # Met à jour la base de donnée SQLite (db.sqlite)
+```
+
+- **Réinitialiser la base** :
+```bash
+init-db --reset             # Réinitialise la table du réseau (reseau) dans PostgreSQL
+init-db --reset --postgre   # Réinitialise la table du réseau dans PostgreSQL
+init-db --reset --sqlite    # Réinitialise complètement la base de donnée SQLite (db.sqlite)
 ```
 
 **Options :**
@@ -46,6 +56,8 @@ init-db -R -p   # Réinitialise la base (supprime puis recrée) et insère les d
 | `-f`, `--fill`      | Remplit la base uniquement si elle est vide                    |
 | `-R`, `--reset`     | Supprime toutes les tables avant de les recréer               |
 | `-t`, `--test`      | Utilise la base de données de test                            |
+| `--postgre`         | Force l'utilisation de PostgreSQL (par défaut)                |
+| `--sqlite`          | Force l'utilisation de SQLite                                 |
 
 Les données de référence proviennent des fichiers dans `harmoniq/db/CSVs/` et incluent : parcs éoliens, barrages hydro, centrales thermiques, centrales solaires, bus et lignes du réseau électrique.
 
@@ -53,12 +65,12 @@ Les données de référence proviennent des fichiers dans `harmoniq/db/CSVs/` et
 
 ### `load-db` — Télécharger la base de données
 
-Télécharge le fichier de base de données de demande (`demande.db`) depuis Google Drive et le place dans `harmoniq/db/`.
+Télécharge la base de données depuis Hugging Face. PostgreSQL est la destination par défaut.
 
 ```bash
-load-db
+load-db             # Télécharge la base de données PostgreSQL
+load-db --postgre   # Télécharge la base de données PostgreSQL
+load-db --sqlite    # Télécharge la base de données SQLite (demande.db)
 ```
-
-Cette commande utilise `gdown` pour télécharger automatiquement le fichier. Si le téléchargement échoue, le fichier peut etre téléchargé manuellement depuis le lien dans le README principal du projet.
 
 ---

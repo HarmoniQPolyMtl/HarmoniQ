@@ -1,5 +1,11 @@
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
+
+# Load .env from the project root (harmoniQ/)
+_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+load_dotenv(_ENV_FILE)
 from sqlalchemy.orm import Session, sessionmaker
 
 import inspect
@@ -12,8 +18,22 @@ from harmoniq.db import schemas
 # engine.py : Ce fichier est responsable de la création de l'engine SQLAlchemy et de la session de base de données.
 # Il est utilisé pour se connecter à la base de données et exécuter des requêtes.
 
-DATABASE__URL = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH}")
-engine = create_engine(DATABASE__URL)
+if os.environ.get("HARMONIQ_TESTING") == "True":
+    test_db_url = os.environ.get("TEST_DATABASE_URL")
+    DATABASE__URL = test_db_url if test_db_url else "sqlite:///:memory:"
+elif os.environ.get("HARMONIQ_DB") == "sqlite":
+    DATABASE__URL = f"sqlite:///{DB_PATH}"
+else:
+    DATABASE__URL = os.getenv("DATABASE_URL", "postgresql://harmoniq:harmoniq@localhost:5432/harmoniq")  # fallback if .env missing
+
+connect_args = {}
+if DATABASE__URL.startswith("postgresql"):
+    connect_args = {'options': '-csearch_path=reseau,public'}
+
+engine = create_engine(DATABASE__URL, connect_args=connect_args)
+if DATABASE__URL.startswith("sqlite"):
+    engine = engine.execution_options(schema_translate_map={"reseau": None})
+    
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 non_table_class = {'Scenario'}

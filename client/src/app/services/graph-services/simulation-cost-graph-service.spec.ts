@@ -66,7 +66,7 @@ const MOCK_COST_RESPONSE = {
     thermique: [],
 };
 
-const COUT_ENDPOINT = 'http://localhost:5000/api/reseau/cout';
+const COUT_ENDPOINT = '/api/reseau/cout';
 
 const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 

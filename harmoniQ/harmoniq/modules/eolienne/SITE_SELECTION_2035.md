@@ -28,37 +28,37 @@ Si ce fichier est absent, le script fonctionne quand même mais **exclut automat
 ### A. Afficher l'aide
 
 ```powershell
-.\venv\Scripts\python.exe -m harmoniq.scripts.select_wind_sites_2035 --help
+.\venv\Scripts\python.exe -m harmoniq.scripts.eolien.select_wind_sites_2035 --help
 ```
 
 ### B. Lancement standard (2015–2024)
 
 ```powershell
-.\venv\Scripts\python.exe -m harmoniq.scripts.select_wind_sites_2035 --start-year 2015 --end-year 2024
+.\venv\Scripts\python.exe -m harmoniq.scripts.eolien.select_wind_sites_2035 --start-year 2015 --end-year 2024
 ```
 
 ### C. Test rapide sur 1 année (ex: 2024)
 
 ```powershell
-.\venv\Scripts\python.exe -m harmoniq.scripts.select_wind_sites_2035 --start-year 2024 --end-year 2024
+.\venv\Scripts\python.exe -m harmoniq.scripts.eolien.select_wind_sites_2035 --start-year 2024 --end-year 2024
 ```
 
 ### D. Forcer un dossier de sortie custom
 
 ```powershell
-.\venv\Scripts\python.exe -m harmoniq.scripts.select_wind_sites_2035 --start-year 2015 --end-year 2024 --output-dir harmoniq/modules/eolienne/plot/site_selection_2035_run1
+.\venv\Scripts\python.exe -m harmoniq.scripts.eolien.select_wind_sites_2035 --start-year 2015 --end-year 2024 --output-dir harmoniq/modules/eolienne/plot/site_selection_2035_run1
 ```
 
 ### E. Activer l'offshore avec un GeoJSON spécifique
 
 ```powershell
-.\venv\Scripts\python.exe -m harmoniq.scripts.select_wind_sites_2035 --start-year 2015 --end-year 2024 --waters-geojson "C:\chemin\quebec_waters.geojson"
+.\venv\Scripts\python.exe -m harmoniq.scripts.eolien.select_wind_sites_2035 --start-year 2015 --end-year 2024 --waters-geojson "C:\chemin\quebec_waters.geojson"
 ```
 
 ### F. Modifier les paramètres métier exposés (si nécessaire)
 
 ```powershell
-.\venv\Scripts\python.exe -m harmoniq.scripts.select_wind_sites_2035 --start-year 2015 --end-year 2024 --park-mw 200 --target-mw 10000 --min-distance-km 20
+.\venv\Scripts\python.exe -m harmoniq.scripts.eolien.select_wind_sites_2035 --start-year 2015 --end-year 2024 --park-mw 200 --target-mw 10000 --min-distance-km 20
 ```
 
 ## 4) Fichiers générés

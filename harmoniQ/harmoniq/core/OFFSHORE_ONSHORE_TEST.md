@@ -9,14 +9,14 @@ Le test est basé sur le maillage 1 km stocké en base de données, donc il est 
 Depuis la racine du projet:
 
 ```powershell
-.\venv\Scripts\python.exe -m harmoniq.scripts.migrate_add_offshore_mesh_schema
-.\venv\Scripts\python.exe -m harmoniq.scripts.build_quebec_offshore_mesh --resolution-m 1000 --grid-version qc_mer_1km_v1
+.\venv\Scripts\python.exe -m harmoniq.scripts.eolien.migrate_add_offshore_mesh_schema
+.\venv\Scripts\python.exe -m harmoniq.scripts.eolien.build_quebec_offshore_mesh --resolution-m 1000 --grid-version qc_mer_1km_v1
 ```
 
 Optionnel (si vous voulez remplir `is_offshore` pour les parcs éoliens déjà existants):
 
 ```powershell
-.\venv\Scripts\python.exe -m harmoniq.scripts.backfill_offshore_eolien --grid-version qc_mer_1km_v1
+.\venv\Scripts\python.exe -m harmoniq.scripts.eolien.backfill_offshore_eolien --grid-version qc_mer_1km_v1
 ```
 
 ## 2) API à utiliser dans un module

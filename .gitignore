@@ -34,10 +34,9 @@ n_cache/
 # Profiler Logs
 profile_logs
 
-# Rapport design (artefacts locaux, hors repo)
-generate_rapport.js
+# Base SQL dump (hors repo)
+**/harmoniq.sql
+
+# Artefacts d'outillage local (generation de rapport, etc.)
 node_modules/
-package.json
-package-lock.json
-*.docx
 ~$*

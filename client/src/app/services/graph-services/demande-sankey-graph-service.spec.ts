@@ -25,7 +25,7 @@ const MOCK_SANKEY_RESPONSE = {
   total_gaz: { 0: 1_000_000, 1: 500_000, 2: 0 },
 };
 
-const SANKEY_ENDPOINT = 'http://localhost:5000/api/demande/sankey?CUID=1';
+const SANKEY_ENDPOINT = '/api/demande/sankey?CUID=1';
 
 describe('DemandeSankeyGraphService', () => {
   let service: DemandeSankeyGraphService;

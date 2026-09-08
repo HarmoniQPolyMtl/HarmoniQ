@@ -12,7 +12,7 @@ const MOCK_OPENAPI_RESPONSE = {
   },
 };
 
-const OPENAPI_URL = 'http://localhost:5000/openapi.json';
+const OPENAPI_URL = '/openapi.json';
 
 describe('OpenApiService', () => {
   let service: OpenApiService;

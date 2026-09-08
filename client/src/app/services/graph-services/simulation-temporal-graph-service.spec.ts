@@ -42,7 +42,8 @@ import { GraphService } from '@app/services/graph-service';
 import { Scenario } from '@app/models/scenario';
 import { Weather } from '@app/models/weather';
 import { Consumption } from '@app/models/consumption';
-import * as Plotly from 'plotly.js-dist-min';
+import * as _Plotly from 'plotly.js-dist-min';
+const Plotly = vi.mocked(_Plotly);
 
 const MOCK_SCENARIO: Scenario = {
     id: 1,
@@ -77,8 +78,8 @@ const MOCK_DEMANDE_RESPONSE = {
     total_electricity: { '2035-01-01T00:00:00': 4_800_000 },
 };
 
-const RESEAU_ENDPOINT = 'http://localhost:5000/api/reseau/production?is_journalier=false';
-const DEMANDE_ENDPOINT = 'http://localhost:5000/api/demande/temporal';
+const RESEAU_ENDPOINT = '/api/reseau/production?is_journalier=false';
+const DEMANDE_ENDPOINT = '/api/demande/temporal';
 
 const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
@@ -90,6 +91,8 @@ describe('SimulationTemporalGraphService', () => {
     let mockInfrastruturesService: Partial<InfrastruturesService>;
 
     beforeEach(() => {
+        // Clean up any leftover element from prior tests (non-isolated mode)
+        document.getElementById('temporal-simulation-id')?.remove();
         const el = document.createElement('div');
         el.id = 'temporal-simulation-id';
         document.body.appendChild(el);
@@ -132,12 +135,21 @@ describe('SimulationTemporalGraphService', () => {
 
         service = TestBed.inject(SimulationTemporalGraphService);
         httpMock = TestBed.inject(HttpTestingController);
+
+        if (!document.getElementById('temporal-simulation-id')) {
+            const el2 = document.createElement('div');
+            el2.id = 'temporal-simulation-id';
+            document.body.appendChild(el2);
+        }
     });
 
     afterEach(() => {
-        httpMock.verify();
-        vi.clearAllMocks();
-        document.getElementById('temporal-simulation-id')?.remove();
+        try {
+            httpMock.verify();
+        } finally {
+            vi.clearAllMocks();
+            document.getElementById('temporal-simulation-id')?.remove();
+        }
     });
 
     describe('getStepName', () => {

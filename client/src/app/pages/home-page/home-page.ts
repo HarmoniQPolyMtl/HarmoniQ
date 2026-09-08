@@ -15,7 +15,11 @@ export class HomePage implements OnInit, OnDestroy {
     '/home-screen/barrage-hydro.avif',
     '/home-screen/eolienne.jpeg',
     '/home-screen/solar-park-quebec.jpg',
-    '/home-screen/thermal-powerplant.png'
+    'https://images.pexels.com/photos/414837/pexels-photo-414837.jpeg',
+    'https://images.pexels.com/photos/31326222/pexels-photo-31326222/free-photo-of-aerial-view-of-dam-structure-in-alma-wi.jpeg',
+    'https://images.pexels.com/photos/257700/pexels-photo-257700.jpeg',
+    'https://images.pexels.com/photos/356036/pexels-photo-356036.jpeg',
+    'https://images.pexels.com/photos/3044472/pexels-photo-3044472.jpeg'
   ];
 
   currentBgIndex = 0;

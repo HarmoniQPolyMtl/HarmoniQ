@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, Table, Enum, UniqueConstraint
+from sqlalchemy import Column, Integer, BigInteger, String, Float, Boolean, Table, Enum, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.sql.schema import ForeignKey
+from sqlalchemy import MetaData
 
 import pandera.pandas as pa
 from pydantic import BaseModel, TypeAdapter, Field, field_validator, validator
@@ -16,7 +17,8 @@ from enum import Enum as PyEnum
 
 #-----#-----#-----#-----# SQLAlchemy Base #-----#-----#-----#-----#
 
-SQLBase = declarative_base()
+metadata = MetaData(schema="reseau")
+SQLBase = declarative_base(metadata=metadata)
 
 #-----#-----#-----#-----# Latitude Longitude Base #-----#-----#-----#-----#
 
@@ -436,7 +438,7 @@ class Hydro(SQLBase):
     nb_turbines = Column(Integer)
     debits_nominal = Column(Float)
     modele_turbine = Column(String)
-    volume_reservoir = Column(Integer)
+    volume_reservoir = Column(BigInteger)
     nb_turbines_maintenance = Column(Integer)
     id_HQ = Column(Integer)
     annee_commission = Column(Integer, nullable=True)
@@ -630,9 +632,9 @@ class Line(SQLBase):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
-    bus0 = Column(Integer, ForeignKey("bus.name"))
-    bus1 = Column(Integer, ForeignKey("bus.name"))
-    type = Column(Integer, ForeignKey("line_type.name"))
+    bus0 = Column(String, ForeignKey("bus.name"))
+    bus1 = Column(String, ForeignKey("bus.name"))
+    type = Column(String, ForeignKey("line_type.name"))
     capital_cost = Column(Float)
     length = Column(Float)
     s_nom = Column(Float)

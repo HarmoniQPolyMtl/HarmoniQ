@@ -67,9 +67,9 @@ export class CreateInfraModal {
     });
 
     if (this.isOffshore && this.isWind) {
-        if (this.form) {
-            this.form.patchValue({ is_offshore: true });
-        }
+      if (this.form) {
+        this.form.patchValue({ is_offshore: true });
+      }
     }
   }
 
@@ -173,6 +173,18 @@ export class CreateInfraModal {
       controls['is_offshore'] = [offshoreVal, []];
     }
 
+    if (this.isSolar) {
+      if (!controls['panneau_type']) {
+        controls['panneau_type'] = [this.editData?.panneau_type || 'biface', []];
+      }
+      if (!controls['materiau_panneau']) {
+        controls['materiau_panneau'] = [this.editData?.materiau_panneau || 'CS6X_300M', []];
+      }
+      if (!this.editData) {
+        if (controls['orientation_panneau']) controls['orientation_panneau'][0] = 180;
+        if (controls['angle_panneau']) controls['angle_panneau'][0] = 45;
+      }
+    }
     this.form = this.fb.group(controls);
 
   }

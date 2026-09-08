@@ -156,9 +156,30 @@ Chaque type de graphique a son propre service dans graph-services/. Ces services
 
 # **5\. Base de données**
 
+HarmoniQ supporte deux systèmes de gestion de base de données : **PostgreSQL** (configuré et utilisé par défaut via Docker) et **SQLite**. Toutes les opérations et commandes pointent par défaut vers **PostgreSQL**.
+
+## **Script d'initialisation (`init-db` & `load-db`)**
+
+```bash
+# Téléchargement :
+load-db             # Par défaut : télécharge la base de données PostgreSQL
+load-db --postgre   # Télécharge la base de données PostgreSQL
+load-db --sqlite    # Télécharge la base de données SQLite
+
+# Mise à jour (données CSV) :
+init-db -p              # Par défaut : met a jour la base de données PostgreSQL
+init-db -p --postgre    # Met à jour la base de données PostgreSQL
+init-db -p --sqlite     # Met à jour la base de données SQLite (db.sqlite)
+
+# Réinitialisation :
+init-db --reset             # Par défaut : réinitialise la table du réseau PostgreSQL
+init-db --reset --postgre   # Réinitialise la table du réseau PostgreSQL
+init-db --reset --sqlite    # Réinitialise la base db.sqlite
+```
+
 ## **Tables principales**
 
-La base db.sqlite contient :
+La base de données (SQLite ou PostgreSQL) contient :
 
 * scenario : paramètres de simulation
 
@@ -219,3 +240,93 @@ Ce flux illustre ce qui se passe de bout en bout lors d'une simulation.
 5. **Optimisation réseau.** NetworkBuilder assemble les productions dans un réseau PyPSA. NetworkOptimizer résout l'optimisation. Les résultats sont mis en cache.
 
 6. **Affichage.** Les services graph-services/ génèrent les configurations Plotly. La simulation-page affiche les graphiques.
+
+# **8\. Déploiement**
+
+Pour le déploiement de l'application (serveur, client et base de données), l'approche préconisée est l'utilisation de **Docker** et de **Docker Hub**. Les images doivent être compilées localement puis publiées sur un registre comme Docker Hub avant d'être déployées à l'aide de Docker Compose.
+
+L'exemple ci-dessous illustre le déploiement en utilisant un registre d'images, comme celui de l'auteur : `byacine121/harmoniq` (lien : [https://hub.docker.com/r/byacine121/harmoniq](https://hub.docker.com/r/byacine121/harmoniq)).
+
+## **Commandes pour compiler et déployer sur Docker Hub**
+
+Voici les commandes pour compiler les images localement puis les publier (push) vers Docker Hub. Remplacez `byacine121/harmoniq` par votre propre DOCKER_ID/nom_repo si nécessaire.
+
+```bash
+# Se connecter à Docker Hub
+docker login
+
+# 1. Image de la base de données (db)
+# Utilise le Dockerfile situé dans ./harmoniQ/harmoniq/db/
+docker build -t byacine121/harmoniq:db ./harmoniQ/harmoniq/db/
+docker push byacine121/harmoniq:db
+
+# 2. Image du Backend (server)
+# Utilise le Dockerfile situé dans ./harmoniQ/
+docker build -t byacine121/harmoniq:server ./harmoniQ/
+docker push byacine121/harmoniq:server
+
+# 3. Image du Frontend (client)
+# Utilise le Dockerfile situé dans ./client/
+docker build -t byacine121/harmoniq:client ./client/
+docker push byacine121/harmoniq:client
+```
+
+## **Lancer l'application en local avec Docker**
+
+Si vous souhaitez exécuter ces images localement avec Docker Compose, exécutez la commande suivante à la racine du projet où se trouve votre `docker-compose.yml` :
+
+```bash
+docker-compose up -d
+```
+
+Une fois les conteneurs démarrés, l'application complète sera accessible dans votre navigateur à l'adresse suivante : **http://localhost:4200**
+
+## **Fichier `docker-compose.yml`**
+
+Voici le fichier `docker-compose.yml` utilisé pour déployer instantanément l'application n'importe où :
+
+```yaml
+name: harmoniq
+
+services:
+  db:
+    image: byacine121/harmoniq:db
+    restart: always
+    environment:
+      POSTGRES_USER: harmoniq
+      POSTGRES_PASSWORD: harmoniq
+      POSTGRES_DB: harmoniq
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend-net
+
+  server:
+    image: byacine121/harmoniq:server
+    restart: always
+    ports:
+      - "5001:5000"
+    environment:
+      - DATABASE_URL=postgresql://harmoniq:harmoniq@db:5432/harmoniq
+    depends_on:
+      - db
+    networks:
+      - backend-net
+      - frontend-net
+
+  client:
+    image: byacine121/harmoniq:client
+    restart: always
+    ports:
+      - "4200:4200"
+    networks:
+      - frontend-net
+
+networks:
+  backend-net:
+    internal: true
+  frontend-net:
+
+volumes:
+  postgres_data:
+```

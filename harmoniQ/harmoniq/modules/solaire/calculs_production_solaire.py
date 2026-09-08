@@ -251,9 +251,24 @@ def calculate_energy_solar_plants(
         ) # Il est possible de fixer le modèle Haydavies au besoin.
 
     # --- Données météo TMY depuis PVGIS (année typique, 8760h) ---
+    # TODO : une fois que les serveur d'hydro white list cet api (https://re.jrc.ec.europa.eu/api/), utiliser ceci à la place
     weather, _ = pvlib.iotools.get_pvgis_tmy(
         latitude, longitude, map_variables=True
     )
+
+    # ---- Fallback method en attendant que l'api soit whitelisted ----
+    #  lorsque les requêtes vers l'API PVGIS sur le serveur de prod sont bloquées
+    # times = pd.date_range(start='2025-01-01', periods=8760, freq='h', tz='UTC')
+    # hours = times.hour
+    # is_day = (hours >= 11) & (hours <= 23)
+    
+    # weather = pd.DataFrame({
+    #     'ghi': np.where(is_day, 500.0, 0.0),
+    #     'dni': np.where(is_day, 400.0, 0.0),
+    #     'dhi': np.where(is_day, 100.0, 0.0),
+    #     'temp_air': np.where(is_day, 20.0, 10.0),
+    #     'wind_speed': [3.0] * 8760,
+    # }, index=times)
     
     # --- Albédo ---
     weather = weather.copy()

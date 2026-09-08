@@ -30,7 +30,7 @@ app.middleware("http")(rate_limit_middleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200", "http://localhost:5000", "http://127.0.0.1:5000", "http://127.0.0.1:4200"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -53,7 +53,10 @@ class SPAFallbackMiddleware(BaseHTTPMiddleware):
         if candidate.is_file():
             return FileResponse(candidate)
 
-        return FileResponse(ANGULAR_INDEX)
+        if ANGULAR_INDEX.is_file():
+            return FileResponse(ANGULAR_INDEX)
+            
+        return response
 
 
 app.add_middleware(SPAFallbackMiddleware)

@@ -1,32 +1,228 @@
-"""Script qui initialise la base de données et la remplit avec des données de référence"""
-
 import pandas as pd
 from pathlib import Path
 from pathlib import Path
 import itertools
+import argparse
+import subprocess
+import sys
+import platform
+import os
+import getpass
+from dotenv import load_dotenv
+from tqdm import tqdm
+
+# Load .env from the project root (harmoniQ/)
+_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+load_dotenv(_ENV_FILE)
+import sys
+
+if "--sqlite" in sys.argv:
+    os.environ["HARMONIQ_DB"] = "sqlite"
+
+from harmoniq.scripts.install_postgres import check_postgres, get_psql_cmd, is_windows, can_connect_as_app_user, get_superuser_password, start_spinner, run_command
 
 from harmoniq.db.engine import engine, get_db
 from harmoniq.db.schemas import SQLBase
 from harmoniq.db import schemas
 from harmoniq.db import CRUD
 
-
-import argparse
-
+id_gen = itertools.count(1)
 
 CURRENT_DIR = Path(__file__).parent
 CSV_DIR = CURRENT_DIR / ".." / "db" / "CSVs"
+DB_DIR = CURRENT_DIR / ".." / "db"
+
+# Credentials loaded from .env
+PG_SUPERUSER = os.getenv("POSTGRES_SUPERUSER", "postgres")
+PG_SUPERPASSWORD = os.getenv("POSTGRES_SUPERPASSWORD", "")
+DB_USER = os.getenv("DB_USER", "harmoniq")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "harmoniq")
+DB_NAME = os.getenv("DB_NAME", "harmoniq")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5432")
+
+def setup_database_and_user():
+    """Crée l'utilisateur et la base de données si absents. Saute si déjà configurés."""
+    if can_connect_as_app_user(DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME):
+        print(f"L'utilisateur '{DB_USER}' et la base '{DB_NAME}' existent déjà. Aucune configuration requise.")
+        return True
+
+    print("Configuration de la base de données PostgreSQL...")
+    superpassword = get_superuser_password(PG_SUPERPASSWORD, PG_SUPERUSER, DB_HOST, DB_PORT, "pour créer l'utilisateur et la base")
+
+    env = os.environ.copy()
+    env["PGPASSWORD"] = superpassword
+
+    print(f"Création de l'utilisateur '{DB_USER}'...")
+    create_user_cmd = [
+        get_psql_cmd(), "-U", PG_SUPERUSER, "-h", DB_HOST, "-p", DB_PORT, "-c",
+        f"CREATE USER {DB_USER} WITH PASSWORD '{DB_PASSWORD}';"
+    ]
+    subprocess.run(create_user_cmd, env=env, shell=is_windows(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    create_db_cmd = [
+        get_psql_cmd(), "-U", PG_SUPERUSER, "-h", DB_HOST, "-p", DB_PORT, "-c",
+        f"CREATE DATABASE {DB_NAME} OWNER {DB_USER};"
+    ]
+    print(f"Création de la base de données '{DB_NAME}'...")
+    subprocess.run(create_db_cmd, env=env, shell=is_windows(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    grant_cmd = [
+        get_psql_cmd(), "-U", PG_SUPERUSER, "-h", DB_HOST, "-p", DB_PORT, "-c",
+        f"GRANT ALL PRIVILEGES ON DATABASE {DB_NAME} TO {DB_USER};"
+    ]
+    subprocess.run(grant_cmd, env=env, shell=is_windows(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return True
 
 
 
-id_gen = itertools.count(1)
+def init_db(reset=False, is_sqlite=False):
+    """Initialise la base de données avec le fichier.sql"""
+    if is_sqlite:
+        from harmoniq import DB_PATH
+        print(f"Initialisation de la base SQLite à {DB_PATH}")
+        if reset:
+            print("Réinitialisation de la base de données SQLite (suppression du fichier)...")
+            try:
+                os.remove(DB_PATH)
+                print("Ancien fichier DB supprimé.")
+            except FileNotFoundError:
+                pass
+        
+        print("Création du schéma dans SQLite...")
+        SQLBase.metadata.create_all(engine)
+        print("Schéma SQLite créé avec succès.")
+        return True
 
-def init_db(reset=False):
+    global PG_SUPERPASSWORD
+    if not check_postgres(PG_SUPERPASSWORD):
+        print("Erreur critique: PostgreSQL n'a pas pu être installé ou configuré.")
+        sys.exit(1)
+
+    setup_database_and_user()
+
+    print("Initialisation de la base de données...")
+    sql_file = DB_DIR / "harmoniq.sql"
+
+    if not sql_file.exists():
+        print("harmoniq.sql introuvable. Téléchargement depuis Hugging Face...")
+        sql_file.parent.mkdir(parents=True, exist_ok=True)
+
+        url = "https://huggingface.co/datasets/byacine121/harmoniq/resolve/main/harmoniq.sql"
+        
+        import requests, tempfile, shutil
+        tmp_file = Path(tempfile.gettempdir()) / "harmoniq_download.sql"
+        tmp_file.unlink(missing_ok=True)
+
+        print(f"Connexion à {url}...")
+        try:
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+            total_size = int(response.headers.get("content-length", 0))
+
+            with open(tmp_file, "wb") as f:
+                with tqdm(total=total_size, unit="B", unit_scale=True, unit_divisor=1024, desc="Téléchargement") as pbar:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                        pbar.update(len(chunk))
+                        
+            print("Déplacement du fichier vers le projet...")
+            shutil.move(str(tmp_file), str(sql_file))
+            print("Téléchargement terminé.")
+        except Exception as e:
+            print(f"Erreur : le téléchargement a échoué. {e}", file=sys.stderr)
+            tmp_file.unlink(missing_ok=True)
+            return False
+
+    # Build the superuser env once (needed for reset + load + grants)
+    PG_SUPERPASSWORD = get_superuser_password(PG_SUPERPASSWORD, PG_SUPERUSER, DB_HOST, DB_PORT, "pour importer les données")
+    env_pg = os.environ.copy()
+    env_pg["PGPASSWORD"] = PG_SUPERPASSWORD
+
     if reset:
-        print("Réinitialisation de la base de données")
-        SQLBase.metadata.drop_all(bind=engine)
+        print("Réinitialisation de la base de données...")
+        reset_cmd = [
+            get_psql_cmd(), "-U", PG_SUPERUSER, "-h", DB_HOST, "-d", DB_NAME, "-p", DB_PORT, "-c",
+            "DROP SCHEMA public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS reseau CASCADE; DROP SCHEMA IF EXISTS demande CASCADE;"
+        ]
+        run_command(reset_cmd, env=env_pg)
 
-    SQLBase.metadata.create_all(bind=engine)
+    # ── Stream harmoniq.sql to psql with a progress bar ────────────────────
+    file_size = sql_file.stat().st_size
+    psql_cmd = [get_psql_cmd(), "-U", PG_SUPERUSER, "-h", DB_HOST, "-d", DB_NAME, "-p", DB_PORT]
+
+    load_success = False
+    try:
+        proc = subprocess.Popen(
+            psql_cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            env=env_pg,
+            shell=False,
+        )
+        with open(sql_file, "rb") as f:
+            with tqdm(
+                total=file_size,
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+                desc="  harmoniq.sql",
+                bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}]",
+                colour="cyan",
+            ) as bar:
+                chunk_size = 256 * 1024  # 256 KB
+                while True:
+                    chunk = f.read(chunk_size)
+                    if not chunk:
+                        break
+                    try:
+                        proc.stdin.write(chunk)
+                        proc.stdin.flush()
+                    except OSError:
+                        break
+                    bar.update(len(chunk))
+
+        try:
+            proc.stdin.close()
+        except OSError:
+            pass
+
+        t, _done = start_spinner("Finalisation (index, sequences...)")
+        proc.wait()
+        _done.set()
+        t.join()
+
+        stderr_output = proc.stderr.read().decode('utf-8', errors='replace')
+        if proc.returncode != 0:
+            print(f"\n[Erreur psql] Code {proc.returncode}:")
+            print(stderr_output.strip())
+            with open("psql_error.txt", "w", encoding="utf-8") as err_f:
+                err_f.write(stderr_output)
+            
+        load_success = proc.returncode == 0
+    except Exception as e:
+        print(f"Erreur lors du chargement: {e}")
+        load_success = False
+
+    if load_success:
+        print("Chargement terminé. Attribution des permissions...")
+        # Three separate -c calls to avoid concatenation issues
+        for grant_sql in [
+            f"GRANT ALL ON SCHEMA public, reseau, demande TO {DB_USER};",
+            f"GRANT ALL ON ALL TABLES IN SCHEMA public, reseau, demande TO {DB_USER};",
+            f"GRANT ALL ON ALL SEQUENCES IN SCHEMA public, reseau, demande TO {DB_USER};",
+        ]:
+            subprocess.run(
+                [get_psql_cmd(), "-U", PG_SUPERUSER, "-h", DB_HOST, "-d", DB_NAME, "-p", DB_PORT, "-c", grant_sql],
+                env=env_pg, shell=is_windows(),
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
+        print("Permissions accordées.")
+    else:
+        print("Le chargement de la base a échoué.")
+
+    return load_success
 
 
 def fill_thermique():
@@ -39,9 +235,8 @@ def fill_thermique():
     for _, row in df.iterrows():
         existing = db.query(schemas.Thermique).filter(schemas.Thermique.nom == row["nom"]).first()
         if existing:
-            print(f"Centrale thermique {row['nom']} existe déjà")
             continue
-            
+
         CRUD.create_thermique(
             db,
             schemas.ThermiqueBase(
@@ -67,7 +262,6 @@ def fill_solaire():
     for _, row in df.iterrows():
         existing = db.query(schemas.Solaire).filter(schemas.Solaire.nom == row["nom"]).first()
         if existing:
-            print(f"Centrale solaire {row['nom']} existe déjà")
             continue
             
         CRUD.create_solaire(
@@ -97,12 +291,10 @@ def fill_parc_eoliennes():
 
     station_df = station_df[station_df["Province_Territoire"] == "Québec"]
 
-    # Get unique "Project Name"
     project_names = station_df["Project Name"].unique()
     for project_name in project_names:
         existing = db.query(schemas.EolienneParc).filter(schemas.EolienneParc.nom == project_name).first()
         if existing:
-            print(f"Projet éolien {project_name} existe déjà")
             continue
             
         try:
@@ -137,12 +329,10 @@ def fill_parc_eoliennes():
             )
 
             CRUD.create_eolienne_parc(db, eolienne_parc)
+            print(f"Projet {project_name} ajouté à la base de données")
         except Exception as e:
             print(f"Erreur lors de l'ajout du projet {project_name}")
             print(e)
-            breakpoint()
-
-        print(f"Projet {project_name} ajouté à la base de données")
 
 
 def fill_hydro():
@@ -158,7 +348,6 @@ def fill_hydro():
             db.query(schemas.Hydro).filter(schemas.Hydro.nom == row["Nom"]).first()
         )
         if existing:
-            print(f"Barrage {row['Nom']} existe déjà")
             continue
 
         db_hydro = schemas.HydroBase(
@@ -182,13 +371,13 @@ def fill_hydro():
         CRUD.create_hydro(db, db_hydro)
         print(f"Barrage '{db_hydro.nom}' ajouté à la base de données")
 
-    print(f"{count} barrage ajoutés à la base de données")
+    if count > 0:
+        print(f"{count} barrages ajoutés à la base de données")
 
 
 def fill_line_types():
     """Remplit la table line_type à partir du fichier CSV"""
     from harmoniq.db.schemas import LineType
-
     db = next(get_db())
 
     file_path = CSV_DIR / "line_types.csv"
@@ -197,9 +386,7 @@ def fill_line_types():
     count = 0
     for _, row in line_types_df.iterrows():
         existing = db.query(LineType).filter(LineType.name == row["name"]).first()
-
         if existing:
-            print(f"Type de ligne {row['name']} existe déjà")
             continue
 
         db_line_type = schemas.LineTypeBase(
@@ -213,7 +400,8 @@ def fill_line_types():
         count += 1
         print(f"Type de ligne '{db_line_type.name}' ajouté à la base de données")
 
-    print(f"{count} types de ligne ajoutés à la base de données")
+    if count > 0:
+        print(f"{count} types de ligne ajoutés à la base de données")
 
 
 BUS_RESEAU_TYPE_MAP = {
@@ -259,7 +447,6 @@ def fill_buses():
         display_name = str(row['name'])
         existing = db.query(schemas.Bus).filter(schemas.Bus.name == bus_id).first()
         if existing:
-            print(f"Bus {bus_id} existe déjà")
             continue
 
         csv_type_col = row.get('type', 'line')  # 'line', 'prod', 'conso'
@@ -286,7 +473,8 @@ def fill_buses():
         CRUD.create_bus(db, db_bus)
         print(f"Bus '{db_bus.name}' ajouté à la base de données")
 
-    print(f"{count} bus ajoutés à la base de données")
+    if count > 0:
+        print(f"{count} bus ajoutés à la base de données")
 
 
 def fill_lines():
@@ -304,7 +492,6 @@ def fill_lines():
                 db.query(schemas.Line).filter(schemas.Line.name == line_name).first()
             )
             if existing:
-                print(f"Ligne {line_name} existe déjà")
                 continue
 
             bus_from = (
@@ -359,7 +546,8 @@ def fill_lines():
         except Exception as e:
             print(f"Erreur lors de l'ajout de la ligne {row['name']}: {e}")
 
-    print(f"{count} lignes ajoutées à la base de données")
+    if count > 0:
+        print(f"{count} lignes ajoutées à la base de données")
 
 
 def check_if_empty():
@@ -430,11 +618,15 @@ def main():
         action="store_true",
         help="Remplit la base de données avec des données de référence",
     )
+    
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--postgre", action="store_true", default=True, help="Utilise PostgreSQL (par défaut)")
+    group.add_argument("--sqlite", action="store_true", help="Utilise SQLite")
 
     args = parser.parse_args()
 
     print("Initialisation de la base de données")
-    init_db(args.reset)
+    init_db(args.reset, is_sqlite=args.sqlite)
 
     if args.fill:
         if check_if_empty():
@@ -448,3 +640,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -43,8 +43,7 @@
                     [formControlName]="field.key" [class.readonly-field]="field.readonly"
                     [class.is-invalid]="form.get(field.key)?.invalid && form.get(field.key)?.touched"
                     [attr.min]="field.nonNegative ? 0 : null" [attr.maxlength]="field.maxLength || null"
-                    [attr.step]="field.type === 'number' ? '0.001' : null"
-                    (keydown)="onKeydown($event, field)"
+                    [attr.step]="field.type === 'number' ? '0.001' : null" (keydown)="onKeydown($event, field)"
                     (blur)="onBlur(field)">
                 @if (field.maxLength && field.type === 'text') {
                 <small class="text-muted d-block text-end mt-1">
@@ -68,7 +67,8 @@
                 @if (field.key === 'nom' && isWind) {
                 <div class="implementation-type-row mt-2">
                     <span class="text-muted small">Type d'implémentation : </span>
-                    <span class="fw-bold small" [style.color]="isOffshore ? 'var(--hq-color-blue)' : 'var(--hq-color-green)'">
+                    <span class="fw-bold small"
+                        [style.color]="isOffshore ? 'var(--hq-color-blue)' : 'var(--hq-color-green)'">
                         {{ isOffshore ? 'Offshore' : 'Onshore' }}
                     </span>
                 </div>
@@ -80,6 +80,7 @@
     </div>
 
     <div class="modal-footer">
-        <button type="submit" class="hq-btn-green" [disabled]="form.invalid">{{ editData ? 'Enregistrer' : 'Créer' }}</button>
+        <button type="submit" class="hq-btn-green" [disabled]="form.invalid">{{ editData ? 'Enregistrer' : 'Créer'
+            }}</button>
     </div>
 </form>

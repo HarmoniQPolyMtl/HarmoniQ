@@ -1,42 +1,38 @@
 import os
-import sqlite3
 from pathlib import Path
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
 from typing import Optional
 
 import pandas as pd
 
-from harmoniq import DEMANDE_PATH
 from harmoniq.db.schemas import Scenario, Weather, Consomation
 
-_conn: Optional[sqlite3.Connection] = None
+_ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
+load_dotenv(_ENV_FILE)
 
 
-def _get_conn() -> sqlite3.Connection:
-    """Open the read-only DB connection lazily (no side effects at import time)."""
-    global _conn
-    if _conn is not None:
-        return _conn
+_engine = None
 
-    # Allow overriding in CI/tests
-    db_path = os.getenv("DEMANDE_PATH", DEMANDE_PATH)
 
-    # Nice error message instead of sqlite3.OperationalError
-    if not Path(db_path).exists():
-        raise FileNotFoundError(
-            f"DEMANDE database not found at '{db_path}'. "
-            f"Set DEMANDE_PATH env var or provide the DB file."
-        )
+def _get_engine():
+    """Open the DB connection lazily (no side effects at import time)."""
+    global _engine
+    if _engine is not None:
+        return _engine
 
-    _conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
-    return _conn
+    db_url = os.getenv("DATABASE_URL", "postgresql://harmoniq:harmoniq@localhost:5432/harmoniq")
+    
+    _engine = create_engine(db_url, connect_args={'options': '-csearch_path=demande,public'})
+    return _engine
 
 async def get_all_sectors() -> pd.DataFrame:
     query = """
         SELECT DISTINCT m.sector
-        FROM Metadata m
-        JOIN Demande d ON d.meta_id = m.id
+        FROM metadata m
+        JOIN demande d ON d.meta_id = m.id
     """
-    df = pd.read_sql_query(query, _get_conn())
+    df = pd.read_sql_query(query, _get_engine())
     return df
 
 async def read_demande_data(
@@ -48,25 +44,26 @@ async def read_demande_data(
 
     query = """
         SELECT d.date, d.electricity, d.gaz, m.sector
-        FROM Demande d
-        JOIN Metadata m ON d.meta_id = m.id
-        WHERE m.CUID = ?
-        AND m.weather = ?
-        AND m.scenario = ?
-        AND d.date BETWEEN ? AND ?
+        FROM demande d
+        JOIN metadata m ON d.meta_id = m.id
+        WHERE m.cuid = %(CUID)s
+        AND m.weather = %(weather)s
+        AND m.scenario = %(scenario)s
+        AND d.date BETWEEN %(start_date)s AND %(end_date)s
+        ORDER BY d.date, m.sector
     """
 
     weather_string = Weather(scenario.weather).name
     consomation_string = Consomation(scenario.consomation).name
 
-    params = (
-        CUID,
-        weather_string,
-        consomation_string,
-        scenario.date_de_debut,
-        scenario.date_de_fin,
-    )
-    df = pd.read_sql_query(query, _get_conn(), params=params)
+    params = {
+        "CUID": CUID,
+        "weather": weather_string,
+        "scenario": consomation_string,
+        "start_date": scenario.date_de_debut,
+        "end_date": scenario.date_de_fin,
+    }
+    df = pd.read_sql_query(query, _get_engine(), params=params)
     return df
 
 
@@ -79,26 +76,27 @@ async def read_demande_data_sankey(
 
     query = """
         SELECT m.sector, SUM(d.electricity) AS total_electricity, SUM(d.gaz) AS total_gaz
-        FROM Demande d
-        JOIN Metadata m ON d.meta_id = m.id
-        WHERE m.CUID = ?
-        AND m.weather = ?
-        AND m.scenario = ?
-        AND d.date BETWEEN ? AND ?
+        FROM demande d
+        JOIN metadata m ON d.meta_id = m.id
+        WHERE m.cuid = %(CUID)s
+        AND m.weather = %(weather)s
+        AND m.scenario = %(scenario)s
+        AND d.date BETWEEN %(start_date)s AND %(end_date)s
         GROUP BY m.sector
+        ORDER BY m.sector
     """
 
     weather_string = Weather(scenario.weather).name
     consomation_string = Consomation(scenario.consomation).name
 
-    params = (
-        CUID,
-        weather_string,
-        consomation_string,
-        scenario.date_de_debut,
-        scenario.date_de_fin,
-    )
-    df = pd.read_sql_query(query, _get_conn(), params=params)
+    params = {
+        "CUID": CUID,
+        "weather": weather_string,
+        "scenario": consomation_string,
+        "start_date": scenario.date_de_debut,
+        "end_date": scenario.date_de_fin,
+    }
+    df = pd.read_sql_query(query, _get_engine(), params=params)
     return df
 
 
@@ -111,28 +109,37 @@ async def read_demande_data_temporal(
 
     query = """
         SELECT d.date, SUM(d.electricity) AS total_electricity, SUM(d.gaz) AS total_gaz
-        FROM Demande d
-        JOIN Metadata m ON d.meta_id = m.id
-        WHERE m.CUID = ?
-        AND m.weather = ?
-        AND m.scenario = ?
-        AND d.date BETWEEN ? AND ?
+        FROM demande d
+        JOIN metadata m ON d.meta_id = m.id
+        WHERE m.cuid = %(CUID)s
+        AND m.weather = %(weather)s
+        AND m.scenario = %(scenario)s
+        AND d.date BETWEEN %(start_date)s AND %(end_date)s
         GROUP BY d.date
+        ORDER BY d.date
     """
     weather_string = Weather(scenario.weather).name
     consomation_string = Consomation(scenario.consomation).name
-    params = (
-        CUID,
-        weather_string,
-        consomation_string,
-        scenario.date_de_debut,
-        scenario.date_de_fin,
-    )
-    df = pd.read_sql_query(query, _get_conn(), params=params)
+    
+    params = {
+        "CUID": CUID,
+        "weather": weather_string,
+        "scenario": consomation_string,
+        "start_date": scenario.date_de_debut,
+        "end_date": scenario.date_de_fin,
+    }
+    df = pd.read_sql_query(query, _get_engine(), params=params)
     df["date"] = pd.to_datetime(df["date"])
     df.set_index("date", inplace=True)
     return df
 
+if os.environ.get("HARMONIQ_DB") == "sqlite":
+    from harmoniq.db.demande_sqlite import (
+        get_all_sectors,
+        read_demande_data,
+        read_demande_data_sankey,
+        read_demande_data_temporal,
+    )
 
 if __name__ == "__main__":
     # Test the function

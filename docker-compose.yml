@@ -1,0 +1,48 @@
+services:
+  db:
+    build:
+      context: ./harmoniQ/harmoniq/db
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      POSTGRES_USER: harmoniq
+      POSTGRES_PASSWORD: harmoniq
+      POSTGRES_DB: harmoniq
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend-net
+
+  server:
+    build:
+      context: ./harmoniQ
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://harmoniq:harmoniq@db:5432/harmoniq
+    depends_on:
+      - db
+    networks:
+      - backend-net
+      - frontend-net
+
+  client:
+    build:
+      context: client
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "4200:4200"
+    networks:
+      - frontend-net
+
+networks:
+  backend-net:
+    internal: true
+  frontend-net:
+
+
+volumes:
+  postgres_data:

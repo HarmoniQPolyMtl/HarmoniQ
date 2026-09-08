@@ -203,7 +203,7 @@ export class MapService {
     ];
     map.setMaxBounds(bounds);
 
-    map.getContainer().addEventListener("dragover", function (e) {
+    map.getContainer().addEventListener("dragover", function (e: any) {
       e.preventDefault();
     });
 
@@ -211,7 +211,7 @@ export class MapService {
     const self = this;
     map.getContainer().addEventListener("drop", function (e: any) {
       e.preventDefault();
-      
+
       const dragData = e.dataTransfer.getData("text/plain");
       if (!dragData || !dragData.includes(',')) {
         return; // Ignore non-infrastructure drags (e.g. text selection, files)
@@ -250,14 +250,15 @@ export class MapService {
 
     this._map = map;
 
-    this.clusterGroup = L.markerClusterGroup({
+    const LeafletInstance = (window as any).L || L;
+    this.clusterGroup = LeafletInstance.markerClusterGroup({
       maxClusterRadius: 70,
       disableClusteringAtZoom: 8,
       spiderfyOnMaxZoom: true,
       showCoverageOnHover: false,
-      iconCreateFunction: (cluster) => createClusterIcon(cluster),
+      iconCreateFunction: (cluster: any) => createClusterIcon(cluster),
     });
-    map.addLayer(this.clusterGroup);
+    map.addLayer(this.clusterGroup as any);
 
     return map;
   }

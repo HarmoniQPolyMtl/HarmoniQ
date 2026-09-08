@@ -44,7 +44,7 @@ const MOCK_RESPONSE = {
     },
 };
 
-const ENDPOINT = 'http://localhost:5000/api/demande/temporal';
+const ENDPOINT = '/api/demande/temporal';
 
 const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 

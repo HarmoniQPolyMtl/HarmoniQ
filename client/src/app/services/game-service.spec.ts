@@ -20,7 +20,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { GameService, Quiz } from './game-service';
 
-const QUIZ_ENDPOINT = 'http://localhost:5000/api/jeux-informatifs/quiz';
+const QUIZ_ENDPOINT = '/api/jeux-informatifs/quiz';
 
 const MOCK_QUIZ: Quiz = {
     answeredQuestionList: [1],

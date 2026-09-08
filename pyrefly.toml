@@ -1,0 +1,9 @@
+# Pyrefly configuration to exclude non-Python files from LSP indexing
+project-excludes = [
+  "**/*.sql",
+  "**/*.csv",
+  "**/node_modules/**",
+  "**/.venv/**",
+  "**/venv/**",
+  "**/__pycache__/**",
+]

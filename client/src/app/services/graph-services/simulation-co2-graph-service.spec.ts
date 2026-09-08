@@ -67,7 +67,7 @@ const MOCK_EMISSION_RESPONSE = {
     import: [],
 };
 
-const EMISSION_ENDPOINT = 'http://localhost:5000/api/reseau/emission';
+const EMISSION_ENDPOINT = '/api/reseau/emission';
 
 const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 

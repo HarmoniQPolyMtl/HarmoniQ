@@ -12,10 +12,10 @@ def test_database_variable():
         pytest.fail("DB_PATH pas trouver dans harmoniq/__init__.py")
 
 
-def test_database_file():
+def test_database_connection():
+    from harmoniq.db.engine import engine
     try:
-        from harmoniq import DB_PATH
-
-        assert DB_PATH.exists()
-    except ImportError:
-        pytest.fail("DB_PATH ne correspond pas a un fichier")
+        with engine.connect() as conn:
+            assert not conn.closed
+    except Exception as e:
+        pytest.fail(f"Could not connect to database: {e}")

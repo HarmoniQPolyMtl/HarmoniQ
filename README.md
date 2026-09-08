@@ -42,6 +42,9 @@ Voici les deux commandes à exécuter en fonction de votre système d’exploita
 # Créer l'environnement virtuel
 python -m venv venv
 
+# OU
+py -3.11 -m venv venv # Pour avoir un environnement virutel avec python 3.11, cela permet d'éviter certains problèmes de compatibilité
+
 # L'activer
 .\venv\Scripts\activate
 ```
@@ -65,18 +68,27 @@ pip install -e .[dev]
 
 ### 2. Initialisation de la base de données
 
-HarmoniQ a besoin d'une base de données pour fonctionner. Vous pouvez la télécharger et l'initialiser automatiquement avec ces deux commandes :
+HarmoniQ supporte à la fois **SQLite** et **PostgreSQL**, mais **PostgreSQL est utilisé par défaut** pour toutes les opérations en base de données. Vous pouvez la télécharger et l'initialiser automatiquement :
 
 ```powershell
 # 1. Télécharger la base de données depuis Google Drive
-load-db
+load-db             # Par défaut : télécharge la base PostgreSQL
+load-db --postgre   # Télécharge la base PostgreSQL
+load-db --sqlite    # Télécharge la base SQLite
 ```
 
 > **Note :** Si le téléchargement automatique échoue, vous pouvez télécharger manuellement la base de données [ici](https://drive.google.com/file/d/1AChv-YwvDrE-nlYdT_aRSumKc571Cqxk/view?usp=sharing) et placer le fichier dans `HarmoniQ/harmoniq/db/`.
 
 ```powershell
-# 2. Initialiser le schéma et remplir les données de référence
-init-db -p
+# 2. Initialiser le schéma et remplir les données de référence (CSVs)
+init-db -p                # Par défaut : met à jour la base PostgreSQL
+init-db -p --postgre      # Met à jour la base PostgreSQL
+init-db -p --sqlite       # Met à jour la base SQLite (db.sqlite)
+
+# (Optionnel) Pour réinitialiser la base de données :
+init-db --reset           # Par défaut : réinitialise la table du réseau PostgreSQL
+init-db --reset --postgre # Réinitialise la table du réseau PostgreSQL
+init-db --reset --sqlite  # Réinitialise la base SQLite (db.sqlite)
 ```
 
 
@@ -85,7 +97,9 @@ init-db -p
 
 Démarrez le serveur web en mode debug :
 ```powershell
-launch-app --debug
+launch-app --debug #Démarre le serveur et le client avec postgresql
+launch-app --debug --sqlite #Démarre le serveur et le client avec sqlite
+launch-app --debug --postgre #Démarre le serveur et le client avec postgresql
 ```
 
 Une fois lancé, ouvrez votre navigateur et accédez à :

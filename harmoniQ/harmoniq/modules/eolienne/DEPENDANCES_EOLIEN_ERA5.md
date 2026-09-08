@@ -44,13 +44,13 @@ key: <UID>:<API_TOKEN>
 Depuis la racine du projet:
 
 ```powershell
-python -m harmoniq.scripts.fetch_era5_quebec_2024 --year 2024
+python -m harmoniq.scripts.eolien.fetch_era5_quebec_2024 --year 2024
 ```
 
 Option pour forcer un re-téléchargement:
 
 ```powershell
-python -m harmoniq.scripts.fetch_era5_quebec_2024 --year 2024 --force-download
+python -m harmoniq.scripts.eolien.fetch_era5_quebec_2024 --year 2024 --force-download
 ```
 
 ### Comportement vis-à-vis des données existantes

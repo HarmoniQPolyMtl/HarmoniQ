@@ -29,6 +29,8 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "sqlalchemy",
+    "python-dotenv",
+    "email-validator",
     # Ajoute les dépendances nécessaires au fur et à mesure
     # solaire dependencies
     "pvlib",
@@ -47,21 +49,22 @@ dependencies = [
     "netCDF4",
     "openmeteo-requests",
     "requests-cache",
-    "retry-requests"
+    "retry-requests",
+    "psycopg2"
 ]
 
 [project.scripts]
 init-db = "harmoniq.scripts.init_database:main"
 load-db = "harmoniq.scripts.load_database:main"
 launch-app = "harmoniq.scripts.lance_webserver:main"
-migrate-weibull = "harmoniq.scripts.migrate_add_weibull_columns:main"
-migrate-weibull-v2 = "harmoniq.scripts.migrate_add_weibull_v2_columns:main"
-backfill-weibull = "harmoniq.scripts.backfill_weibull_eolien:main"
-fetch-era5-qc-2024 = "harmoniq.scripts.fetch_era5_quebec_2024:main"
-select-wind-sites-2035 = "harmoniq.scripts.select_wind_sites_2035:main"
-migrate-offshore-mesh = "harmoniq.scripts.migrate_add_offshore_mesh_schema:main"
-build-offshore-mesh = "harmoniq.scripts.build_quebec_offshore_mesh:main"
-backfill-offshore-eolien = "harmoniq.scripts.backfill_offshore_eolien:main"
+migrate-weibull = "harmoniq.scripts.eolien.migrate_add_weibull_columns:main"
+migrate-weibull-v2 = "harmoniq.scripts.eolien.migrate_add_weibull_v2_columns:main"
+backfill-weibull = "harmoniq.scripts.eolien.backfill_weibull_eolien:main"
+fetch-era5-qc-2024 = "harmoniq.scripts.eolien.fetch_era5_quebec_2024:main"
+select-wind-sites-2035 = "harmoniq.scripts.eolien.select_wind_sites_2035:main"
+migrate-offshore-mesh = "harmoniq.scripts.eolien.migrate_add_offshore_mesh_schema:main"
+build-offshore-mesh = "harmoniq.scripts.eolien.build_quebec_offshore_mesh:main"
+backfill-offshore-eolien = "harmoniq.scripts.eolien.backfill_offshore_eolien:main"
 
 [project.optional-dependencies]
 dev = [

@@ -32,7 +32,9 @@ _REAL_DB = Path(__file__).resolve().parents[1] / "harmoniq" / "db" / "db.sqlite"
 @pytest.fixture(scope="module")
 def db():
     """Session SQLAlchemy vers la vraie db.sqlite."""
-    engine = create_engine(f"sqlite:///{_REAL_DB}")
+    engine = create_engine(f"sqlite:///{_REAL_DB}").execution_options(
+        schema_translate_map={"reseau": None}
+    )
     session = Session(bind=engine)
     yield session
     session.close()

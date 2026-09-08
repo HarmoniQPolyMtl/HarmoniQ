@@ -1,7 +1,27 @@
-"""Tests d'audit reseau_v2 — vérifie le vrai flow du module.
+"""Vérifie le pipeline reseau_v2 de bout en bout sur la vraie base de topologie.
 
-Chaque test appelle les fonctions réelles de reseau_v2 (data_loader,
-network_builder, optimizer) avec la vraie DB (db.sqlite / demande.db).
+Contrairement aux tests unitaires (tests/unit/test_reseau_v2_*), qui utilisent
+un réseau jouet de 2 bus, ce module fait tourner les fonctions réelles du module
+(data_loader, network_builder, optimizer) sur le réseau complet du Québec stocké
+dans harmoniq/db/db.sqlite (251 bus, ~312 lignes).
+
+Ce qu'il contrôle :
+  - TestTopologie          : les paramètres électriques des lignes sont physiques
+                             (résistance et réactance strictement positives ;
+                             x cohérent avec x_par_longueur * longueur).
+  - TestAggregationModulaire: l'agrégation temporelle passe bien par le helper
+                             _aggregate_to_resolution (horaire = identité,
+                             hebdomadaire = index calé sur le lundi, NaN préservés).
+  - TestProfilsGeneration  : les profils de production se chargent avec les clés
+                             attendues, ont des lignes, et p_max_pu reste dans [0, 1].
+  - TestDispatch           : un OPF DC sur une journée est faisable.
+  - TestCoherenceHebdo     : la moyenne horaire égale la valeur hebdomadaire et
+                             l'énergie totale est conservée par l'agrégation.
+
+Prérequis : le fichier harmoniq/db/db.sqlite doit exister et être peuplé
+(commande : init-db -p --sqlite). S'il est absent (cas de la CI, qui lance
+pytest sans initialiser de base), tout le module est ignoré (skip) au lieu
+d'échouer.
 """
 import re
 from pathlib import Path
@@ -21,8 +41,15 @@ from harmoniq.modules.reseau_v2.data_loader import (
 from harmoniq.modules.reseau_v2.network_builder import build_pypsa_network
 from harmoniq.modules.reseau_v2.optimizer import run_dispatch_and_flow
 
-# Chemin vers la vraie DB (pas test_db.sqlite créé par conftest)
+# Vraie base de topologie (pas la base en mémoire créée par conftest.py).
 _REAL_DB = Path(__file__).resolve().parents[1] / "harmoniq" / "db" / "db.sqlite"
+
+# La CI lance `pytest` sans `init-db` : sans la base, on ignore le module entier
+# au lieu de faire échouer la build.
+pytestmark = pytest.mark.skipif(
+    not _REAL_DB.exists(),
+    reason=f"{_REAL_DB.name} absente — lancer `init-db -p --sqlite` pour ces tests",
+)
 
 
 # ---------------------------------------------------------------------------

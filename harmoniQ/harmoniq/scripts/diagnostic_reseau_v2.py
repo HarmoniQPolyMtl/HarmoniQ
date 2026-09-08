@@ -1,16 +1,27 @@
 #!/usr/bin/env python
 """
-Test d'intégration RÉEL — reseau_v2 avec tous les modules connectés.
+Diagnostic manuel de bout en bout du module reseau_v2.
 
-Utilise :
-  - Scénario 2035 complet (8760h, année entière) depuis la DB
-  - SimulationInfraGroup (toutes les infras DB)
-  - Vrais profils : InfraParcEolienne, InfraSolaire, InfraHydro, InfraThermique
-  - Vraie demande depuis demande.db (99 MRC)
-  - LOPF HiGHS + AC PF Newton-Raphson interne
+Ce n'est PAS un test automatique (pas de pytest, pas d'assert) : c'est un outil
+qu'on lance à la main pour faire tourner une simulation réseau complète et lire
+un rapport détaillé (dispatch par filière, pertes, violations thermiques, flux
+d'interconnexion, lignes à renforcer, temps de calcul). Il sert à vérifier
+« pour de vrai » qu'une modification n'a rien cassé, avant d'ouvrir une PR.
 
-Usage:
-    python test_integration_reseau_v2.py [--scenario_id 1] [--flow_mode ac]
+Il utilise :
+  - un scénario complet depuis la base (ex. 2035, 8760 h) ;
+  - toutes les infrastructures présentes en base (SimulationInfraGroup) ;
+  - les vrais profils (éolien, solaire, hydro, thermique, nucléaire) ;
+  - la vraie demande (demande.db) ;
+  - le solveur HiGHS (LOPF) puis l'écoulement de puissance AC Newton-Raphson.
+
+Prérequis : une base peuplée contenant au moins un scénario
+(init-db -p --sqlite) et, en pratique, HARMONIQ_DB=sqlite pour ne pas viser
+PostgreSQL.
+
+Usage :
+    python -m harmoniq.scripts.diagnostic_reseau_v2 [--scenario_id 1] [--flow_mode ac]
+    python -m harmoniq.scripts.diagnostic_reseau_v2 --save_plot resultats.html
 """
 
 import argparse

@@ -1,7 +1,19 @@
-"""Test d'intégration minimal : build network → optimize 1 chunk → dispatch > 0.
+"""Test unitaire du chemin build + optimisation de reseau_v2, sur un réseau jouet.
 
-Ce test attrape les régressions silencieuses (ex: pandas ArrowStringArray)
-qui font que l'OPF retourne 0 MW partout sans lever d'erreur.
+On construit à la main la plus petite topologie possible (2 bus, 1 ligne, 1 type
+de ligne) et des profils de charge/production minimaux, puis on appelle
+build_pypsa_network suivi d'une optimisation sur un seul bloc de temps.
+
+Ce qu'il contrôle :
+  - test_build_and_optimize_one_chunk : l'OPF renvoie un dispatch strictement
+    positif. Sans cette vérification, une régression silencieuse (par exemple un
+    changement de type de colonne pandas) peut faire renvoyer 0 MW partout sans
+    lever la moindre erreur — le test le rendrait alors visible.
+  - test_etranger_bus_has_no_load : le bus « Étranger » (marché externe) ne porte
+    aucune charge.
+
+Rapide et sans dépendance externe : aucune base de données réelle, tout est monté
+en mémoire.
 """
 import pandas as pd
 import numpy as np

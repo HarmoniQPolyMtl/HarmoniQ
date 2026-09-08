@@ -1,3 +1,19 @@
+"""Test unitaire de l'extraction des indicateurs de bilan énergétique.
+
+On monte à la main un réseau PyPSA minimal (un bus Québec, un bus interconnexion,
+un bus étranger, un barrage, un lien vers le marché externe), on force un
+déséquilibre offre/demande, puis on vérifie ce que extract_kpis en déduit.
+
+Ce qu'il contrôle :
+  - test_deficit_import_positive      : demande > production locale => import > 0.
+  - test_surplus_export_positive      : production locale > demande => export > 0.
+  - test_interco_unavailable_zero_flows: lien d'interconnexion à capacité nulle
+    => import et export nuls.
+  - test_balance_near_zero            : quand l'offre couvre exactement la demande,
+    l'erreur de bilan reste quasi nulle.
+
+Rapide et sans dépendance externe : aucune base de données, tout est monté en mémoire.
+"""
 import pandas as pd
 import pypsa
 

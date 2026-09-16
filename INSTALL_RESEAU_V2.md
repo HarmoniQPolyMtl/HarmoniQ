@@ -45,27 +45,37 @@ pip install -e ".[dev]"
 Installe entre autres `psycopg2`, `python-dotenv`, `email-validator` (requis depuis
 l'intégration de `main`). **À relancer après chaque `git pull`** (les versions bougent).
 
-## 4. Base de données — choisir SQLite ou PostgreSQL
+Les dépendances propres à `reseau_v2` (calcul du réseau, lecture du fichier
+Excel des interconnexions...) sont déjà incluses dans celles de `main` — rien
+à ajouter à part cette commande.
 
-Depuis l'intégration de `main`, **PostgreSQL est le backend par défaut**. Pour le
-développement local, **SQLite est le plus simple** : un seul fichier, aucun serveur.
+## 4. Base de données — SQLite ou PostgreSQL
 
-### Option A — SQLite (recommandé en local)
+Depuis l'intégration de `main`, PostgreSQL est le backend par défaut. Le
+projet supporte aussi SQLite.
+
+Il y a deux bases, avec deux origines différentes :
+
+| Base | Fichier | Contenu | D'où elle vient |
+|---|---|---|---|
+| Réseau | `harmoniq/db/db.sqlite` (mode SQLite) | topologie (bus, lignes) + toutes les infrastructures | construite sur la machine, par `init-db`, à partir des CSV déjà dans le dépôt — rien à télécharger |
+| Demande | `harmoniq/db/demande.db` | consommation électrique par MRC | téléchargée par `load-db`, depuis Hugging Face |
+
+### Option A — SQLite
 
 ```bash
-load-db --sqlite      # télécharge db.sqlite depuis Google Drive
-init-db -p --sqlite   # crée le schéma + données de référence (bus, lignes, types...)
+load-db --sqlite
+init-db -p --sqlite
 ```
+
+Les deux commandes sont nécessaires, pour des raisons différentes : la
+première récupère la demande, la seconde construit le réseau localement.
 
 Pour ne pas répéter `--sqlite` à chaque commande :
 ```bash
 export HARMONIQ_DB=sqlite          # Linux/macOS
 $env:HARMONIQ_DB = "sqlite"        # Windows PowerShell
 ```
-
-> Si `load-db` échoue : télécharger manuellement
-> [ici](https://drive.google.com/file/d/1AChv-YwvDrE-nlYdT_aRSumKc571Cqxk/view?usp=sharing)
-> et placer le fichier dans `harmoniQ/harmoniq/db/`.
 
 ### Option B — PostgreSQL
 
@@ -74,8 +84,17 @@ init-db -p            # utilise .env (harmoniQ/.env) ; crée user + base si beso
 ```
 
 Nécessite un serveur PostgreSQL local (port 5432). `harmoniQ/.env` porte les
-identifiants. Voir aussi `scripts/install_postgres.py` et `docker-compose.yml`
-(stack complète db + serveur + client).
+identifiants. Voir aussi `scripts/install_postgres.py` et `docker-compose.yml`.
+
+### Un fichier à ne pas déplacer
+
+Le fichier `Interconnexions - Données révisées.xlsx`, à la racine du dépôt,
+est nécessaire pour que les capacités d'import/export du réseau soient
+justes. Il est déjà dans le dépôt (suivi par git), rien à faire pour
+l'installation — mais ne pas le déplacer, le renommer ou le supprimer : sans
+lui, les simulations continuent de fonctionner, mais avec une capacité fixe
+de 500 MW pour toutes les interconnexions, sans avertissement visible dans
+l'interface.
 
 ## 5. Lancer l'application
 

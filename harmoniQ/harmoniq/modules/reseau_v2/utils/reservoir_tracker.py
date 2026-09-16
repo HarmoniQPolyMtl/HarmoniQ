@@ -28,10 +28,9 @@ import numpy as np
 import pandas as pd
 import pypsa
 
-logger = logging.getLogger("ReservoirTracker")
+from harmoniq.modules.hydro import APPORT_DIR as _APPORT_DIR
 
-# CSV d'apport naturel : harmoniq/modules/hydro/apport_naturel/{id_HQ}.csv
-_APPORT_DIR = Path(__file__).parent.parent.parent.parent / "hydro" / "apport_naturel"
+logger = logging.getLogger("ReservoirTracker")
 
 # Niveau initial par défaut si non fourni.
 # 80% correspond au niveau typique HQ en début d'année (après automne humide,

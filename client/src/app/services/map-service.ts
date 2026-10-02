@@ -7,6 +7,7 @@ import { InfrastruturesService } from './infrastrutures-service';
 import { MapLineService } from './map-line-service';
 import { ProtectedAreasService } from './protected-areas-service';
 import { InfraDetailService } from './infra-detail-service';
+import { environment } from 'environments/environment';
 
 const types = ['hydro', 'eolienneparc', 'solaire', 'thermique', 'nucleaire'];
 
@@ -192,7 +193,7 @@ export class MapService {
     }).setView([52.9399, -67], 4);
 
     // Texture of the map, could be fun to add some more
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer(`https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=${environment.cartoApiKey}`, {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
       crossOrigin: 'anonymous',
     } as any).addTo(map);

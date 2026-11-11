@@ -1,20 +1,43 @@
-<div class="d-flex align-items-center" style="margin-left: 1rem;">
-    <a class="navbar-brand d-flex align-items-center" [routerLink]="disableDefaultRouting ? null : (router.url === '/map' ? '/' : '/map')" 
-        (click)="onBrandClick($event)" style="gap: 2px; margin-right: 0; cursor: pointer;">
+<div class="d-flex align-items-center" style="margin-left: 1rem">
+    <a
+        class="navbar-brand d-flex align-items-center"
+        [routerLink]="disableDefaultRouting ? null : router.url === '/map' ? '/' : '/map'"
+        (click)="onBrandClick($event)"
+        style="gap: 2px; margin-right: 0; cursor: pointer"
+    >
         <span
-            style="color: #ffffff; font-weight: 800; font-family: 'Inter', 'Arial', sans-serif; padding-right: 2px;">Harmoni</span>
-        <img src="/icons/hqLogo.png" alt="Q"
-            style="height: 1.1em; width: auto; margin-left: 2px; transform: translateY(0.12em);">
+            style="
+                color: #ffffff;
+                font-weight: 800;
+                font-family: 'Inter', 'Arial', sans-serif;
+                padding-right: 2px;
+            "
+            >HarmoniQ</span
+        >
+        <!-- <img src="/icons/hqLogo.png" alt="Q"
+            style="height: 1.1em; width: auto; margin-left: 2px; transform: translateY(0.12em);"> -->
     </a>
-    <span style="color: rgba(255, 255, 255, 0.5);" class="mx-2">|</span>
-    <a href="https://www.polymtl.ca/programmes/cours/projet-integrateur-iv-en-genie-mecanique-0" target="_blank"
-        rel="noopener noreferrer">
-        <img style="height: 2em; margin-left: 1em;"
-            src="/icons/polymtlLogo.png" alt="Polytechnique">
+    <span style="color: rgba(255, 255, 255, 0.5)" class="mx-2">|</span>
+    <a
+        href="https://www.polymtl.ca/programmes/cours/projet-integrateur-iv-en-genie-mecanique-0"
+        target="_blank"
+        rel="noopener noreferrer"
+    >
+        <img
+            style="height: 2em; margin-left: 1em"
+            src="/icons/polymtlLogo.png"
+            alt="Polytechnique"
+        />
     </a>
-    <a href="https://www.hydroquebec.com/projets/planifier/prevoir-demande-electricite.html" target="_blank"
-        rel="noopener noreferrer">
-        <img style="height: 2em; margin-left: 1em;"
-            src="/icons/hqLogo.png" alt="Logo de Hydro-Québec">
+    <a
+        href="https://www.hydroquebec.com/projets/planifier/prevoir-demande-electricite.html"
+        target="_blank"
+        rel="noopener noreferrer"
+    >
+        <img
+            style="height: 2em; margin-left: 1em"
+            src="/icons/hqLogo.png"
+            alt="Logo de Hydro-Québec"
+        />
     </a>
 </div>
